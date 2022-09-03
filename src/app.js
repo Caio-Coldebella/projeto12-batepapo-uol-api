@@ -102,6 +102,23 @@ app.post('/messages', async (req,res)=>{
 
 });
 
+app.post('/status', async (req,res)=>{
+    const user = req.headers.user;
+    try {
+        const exists = await db.collection("participants").find({name: user}).toArray();
+        if(!exists){
+            res.sendStatus(404);
+            return;
+        }
+        await db.collection("participants").deleteOne({name: user});
+        await db.collection("participants").insertOne({name: user, lastStatus: Date.now()});
+        res.sendStatus(200);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+});
+
 app.listen(5000, () => {
     console.log('Server is listening on port 5000.');
   });
