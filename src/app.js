@@ -51,6 +51,29 @@ app.post('/participants', async (req,res)=>{
     }
 });
 
+app.get('/messages', async (req,res)=>{
+    const source = req.headers.user;
+    let limit = req.query.limit;
+    try {
+        let arrmessages = await db.collection("messages").find({$or: [{to: "Todos"},{to: source},{from: source}]}).toArray()
+        if(limit){
+            limit = Number(limit);
+            arrmessages = arrmessages.reverse();
+            let aux = [];
+            for(let i=0; i < limit && i < arrmessages.length; i++){
+                aux.push(arrmessages[i]);
+            }
+            aux = aux.reverse();
+            res.send(aux);
+            return;
+        }
+        res.send(arrmessages)
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+});
+
 app.post('/messages', async (req,res)=>{
     const msg = req.body;
     const source = req.headers.user;
