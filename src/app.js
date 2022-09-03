@@ -14,6 +14,16 @@ mongoClient.connect(() => {
   db = mongoClient.db("batepapouol");
 });
 
+app.get('/participants', async (req,res)=>{
+    try {
+        const users = await db.collection("participants").find().toArray();
+        res.send(users);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+});
+
 app.post('/participants', async (req,res)=>{
     const data = req.body;
     const participantSchema = joi.object({
@@ -38,7 +48,6 @@ app.post('/participants', async (req,res)=>{
         res.sendStatus(500)
     }
 });
-
 
 app.listen(5000, () => {
     console.log('Server is listening on port 5000.');
