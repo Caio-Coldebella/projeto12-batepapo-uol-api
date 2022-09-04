@@ -122,11 +122,49 @@ app.post('/messages', async (req,res)=>{
 
 });
 
+app.put('/messages/:ID_DA_MENSAGEM', async (req,res)=>{
+    const body = req.body;
+    const usr = req.headers.user;
+    const idmsg = req.params.ID_DA_MENSAGEM;
+    const messageSchema = joi.object({
+        to : joi.string().required(),
+        text : joi.string().required(),
+        type : joi.string().valid('message','private_message').required()
+    });
+    const validation = messageSchema.validate(body);
+    if(validation.error){
+        res.status(422).send(validation.error.details);
+        return;
+    }
+    try {
+        const validsrc = await db.collection("participants").find({name : usr}).toArray();
+        if(validsrc.length === 0){
+            res.sendStatus(422);
+            return;
+        }
+        const existsmsg = await db.collection("messages").find({_id: new ObjectId(idmsg)}).toArray();
+        if(existsmsg.length === 0){
+            res.sendStatus(404);
+            return;
+        }
+        if(existsmsg[0].from != usr){
+            res.sendStatus(401);
+            return;
+        }
+        await db.collection("messages").updateOne({_id: new ObjectId(idmsg)},{$set:{text: body.text}});
+        res.sendStatus(200);
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+
+});
+
 app.delete('/messages/:ID_DA_MENSAGEM', async (req,res)=>{
     const user = req.headers.user;
     const idmsg = req.params.ID_DA_MENSAGEM;
     try {
-        const message = await db.collection("messages").find({_id: ObjectId(idmsg)}).toArray();
+        const message = await db.collection("messages").find({_id: new ObjectId(idmsg)}).toArray();
         if(message.length === 0){
             res.sendStatus(404);
             return;
