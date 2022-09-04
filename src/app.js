@@ -16,6 +16,26 @@ mongoClient.connect(() => {
   db = mongoClient.db("batepapouol");
 });
 
+setInterval(removeinative,15000);
+
+async function removeinative(){
+    const now = Date.now();
+    try {
+        const users = await db.collection("participants").find().toArray();
+        for(let i=0; i<users.length; i++){
+            const past = users[i].lastStatus;
+            const diff = Math.abs(now - past)/1000;
+            if(diff > 15){
+                const username = users[i].name;
+                await db.collection("participants").deleteOne({name: username});
+                await db.collection("messages").insertOne({from: username, to: 'Todos', text: 'sai da sala...', type: 'status', time: dayjs(new Date()).format('HH-mm-ss')});
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 app.get('/participants', async (req,res)=>{
     try {
         const users = await db.collection("participants").find().toArray();
